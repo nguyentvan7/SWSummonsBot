@@ -29,34 +29,39 @@ with open("awake_ld3.json") as f:
     awake_ld3 = json.load(f)
 with open("awake_ld4.json") as f:
     awake_ld4 = json.load(f)
+with open("sf_elem4.json") as f:
+    sf_elem4 = json.load(f)
+with open("sf_ld4.json") as f:
+    sf_ld4 = json.load(f)
+with open("sf_elem5.json") as f:
+    sf_elem5 = json.load(f)
+with open("sf_ld5.json") as f:
+    sf_ld5 = json.load(f)
 
 def unknown():
+    # Technically incorrect, should fix at some point.
+    # awaken should be only done if the monster is awakened.
     r = random.random()
     a = random.random()
     if r < .742:
         # 1 star.
         if a < .98:
             # Not awakened.
-            m = random.randrange(0, len(elem1))
-            return elem1[m]
+            return random.choice(elem1)
         else:
             # Awakened.
-            m = random.randrange(0, len(awake_elem1))
-            return awake_elem1[m]
+            return random.choice(awake_elem1)
     elif r < .986:
         # 2 star.
         if a < .98:
             # Not awakened.
-            m = random.randrange(0, len(elem2))
-            return elem2[m]
+            return random.choice(elem2)
         else:
             # Awakened.
-            m = random.randrange(0, len(awake_elem2))
-            return awake_elem2[m]
+            return random.choice(awake_elem2)
     else:
         # 3 star.
-        m = random.randrange(0, len(elem3)-1)
-        return elem3[m]
+        return random.choice(elem3)
 
 def mystical():
     r = random.random()
@@ -65,26 +70,21 @@ def mystical():
         # 3 star.
         if a < .98:
             # Not awakened.
-            m = random.randrange(0, len(elem3))
-            return elem3[m]
+            return random.choice(elem3)
         else:
             # Awakened.
-            m = random.randrange(0, len(awake_elem3))
-            return awake_elem3[m]
+            return random.choice(awake_elem3)
     elif r < .995:
         # 4 star.
         if a < .98:
             # Not awakened.
-            m = random.randrange(0, len(elem4))
-            return elem4[m]
+            return random.choice(elem4)
         else:
             # Awakened.
-            m = random.randrange(0, len(awake_elem4))
-            return awake_elem4[m]
+            return random.choice(awake_elem4)
     else:
         # 5 star.
-        m = random.randrange(0, len(elem5)-1)
-        return elem5[m]
+        return random.choice(elem5)
 
 def legendary():
     r = random.random()
@@ -93,16 +93,13 @@ def legendary():
         # 4 star.
         if a < .98:
             # Not awakened.
-            m = random.randrange(0, len(elem4))
-            return elem4[m]
+            return random.choice(elem4)
         else:
             # Awakened.
-            m = random.randrange(0, len(awake_elem4))
-            return awake_elem4[m]
+            return random.choice(awake_elem4)
     else:
         # 5 star.
-        m = random.randrange(0, len(elem5)-1)
-        return elem5[m]
+        return random.choice(elem5)
 
 def ld():
     r = random.random()
@@ -111,29 +108,43 @@ def ld():
         # 3 star.
         if a < .98:
             # Not awakened.
-            m = random.randrange(0, len(ld3))
-            return ld3[m]
+            return random.choice(ld3)
         else:
             # Awakened.
-            m = random.randrange(0, len(awake_ld3))
-            return awake_ld3[m]
+            return random.choice(awake_ld3)
     elif r < .9965:
         # 4 star.
         if a < .98:
             # Not awakened.
-            m = random.randrange(0, len(ld4))
-            return ld4[m]
+            return random.choice(ld4)
         else:
             # Awakened.
-            m = random.randrange(0, len(awake_ld4))
-            return awake_ld4[m]
+            return random.choice(awake_ld4)
     else:
         # 5 star.
-        m = random.randrange(0, len(ld5)-1)
-        return ld5[m]
+        return random.choice(ld5)
+
+def trans():
+    # 5 star.
+    return random.choice(elem5)
+
+def sf():
+    r = random.random()
+    if r < .846:
+        # 4 star elemental.
+        return random.choice(sf_elem4)
+    elif r < .92:
+        # 4 star ld.
+        return random.choice(sf_ld4)
+    elif r < .9962:
+        # 5 star elemental.
+        return random.choice(sf_elem5)
+    else:
+        # 5 star ld.
+        return random.choice(sf_ld5)
 
 def summon(type, amt):
-    methods = [unknown, mystical, legendary, ld]
+    methods = [unknown, mystical, legendary, ld, trans, sf]
     summoned = []
     for i in range(amt):
         summoned.append(methods[type]())
