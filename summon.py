@@ -38,6 +38,18 @@ with open("sf_elem5.json") as f:
 with open("sf_ld5.json") as f:
     sf_ld5 = json.load(f)
 
+elem = ["water", "fire", "wind"]
+def gen_mon(num, stars, isAwakened):
+    m = {}
+    m["name"] = str(stars) + "-star"
+    m["image_filename"] = "ss.png"
+    m["element"] = elem[num-1] if stars == 5 else "#" + str(num)
+    m["archetype"] = "UNKNOWN"
+    m["natural_stars"] = stars
+    m["can_awaken"] = True
+    m["is_awakened"] = isAwakened
+    return m
+
 def unknown():
     # Technically incorrect, should fix at some point.
     # awaken should be only done if the monster is awakened.
@@ -143,8 +155,25 @@ def sf():
         # 5 star ld.
         return random.choice(sf_ld5)
 
+def ss():
+    r = random.random()
+    a = random.choice([True, False])
+    if r < .915:
+        # 3 star.
+        m = random.randrange(1, 9)
+        return gen_mon(m, 3, a)
+    elif r < .995:
+        # 4 star.
+        m = random.randrange(1, 6)
+        return gen_mon(m, 4, a)
+    else:
+        # 5 star.
+        m = random.randrange(1, 4)
+        return gen_mon(m, 5, False)
+        
+
 def summon(type, amt):
-    methods = [unknown, mystical, legendary, ld, trans, sf]
+    methods = [unknown, mystical, legendary, ld, trans, sf, ss]
     summoned = []
     for i in range(amt):
         summoned.append(methods[type]())

@@ -1,6 +1,6 @@
 import json
 
-with open("bestiary_data.json") as f:
+with open("minified.json") as f:
     bestiary = json.load(f)
 
 def gen_mon(monster):
@@ -9,7 +9,7 @@ def gen_mon(monster):
     m["image_filename"] = monster["fields"]["image_filename"]
     m["element"] = monster["fields"]["element"]
     m["archetype"] = monster["fields"]["archetype"]
-    m["natural stars"] = monster["fields"]["natural_stars"]
+    m["natural_stars"] = monster["fields"]["natural_stars"]
     m["can_awaken"] = monster["fields"]["can_awaken"]
     m["is_awakened"] = monster["fields"]["is_awakened"]
     return m
@@ -78,7 +78,8 @@ for monster in bestiary:
     and monster["fields"]["name"] != "RYU" \
     and not(monster["fields"]["name"] == "Phoenix" and monster["fields"]["element"] == "water") \
     and not(monster["fields"]["name"] == "Valkyrja" and monster["fields"]["element"] == "wind") \
-    and not(monster["fields"]["name"] == "Lightning Emperor" and monster["fields"]["element"] == "fire"):
+    and not(monster["fields"]["name"] == "Lightning Emperor" and monster["fields"]["element"] == "fire") \
+    and not(monster["fields"]["name"] == "Panda Warrior" and monster["fields"]["element"] == "fire"):
         monsters.append(gen_mon(monster))
 with open("elem5.json", "w") as out:
     json.dump(monsters, out)
@@ -91,7 +92,7 @@ for monster in bestiary:
     and monster["fields"]["obtainable"] == True \
     and monster["fields"]["is_awakened"] == False \
     and monster["fields"]["name"] != "Cow Girl" \
-    and not(monster["fields"]["name"] != "Magical Archer" and monster["fields"]["element"] == "light") \
+    and not(monster["fields"]["name"] == "Magical Archer" and monster["fields"]["element"] == "light") \
     and monster["fields"]["name"] != "Fairy Queen":
         monsters.append(gen_mon(monster))
 with open("ld3.json", "w") as out:
@@ -123,7 +124,7 @@ for monster in bestiary:
     and monster["fields"]["name"] != "M. BISON" \
     and monster["fields"]["name"] != "KEN" \
     and monster["fields"]["name"] != "RYU" \
-    and not(monster["fields"]["name"] != "Paladin" and monster["fields"]["element"] == "light"):
+    and not(monster["fields"]["name"] == "Paladin" and monster["fields"]["element"] == "light"):
         monsters.append(gen_mon(monster))
 with open("ld5.json", "w") as out:
     json.dump(monsters, out)
