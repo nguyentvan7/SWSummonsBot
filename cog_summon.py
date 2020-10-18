@@ -1,16 +1,38 @@
 from discord.ext import commands
-import csv
+from prettytable import PrettyTable
+from prettytable import PLAIN_COLUMNS
+from discord import Embed
+import json
 import summon
+
 class Cog_Summon(commands.Cog):
+    longmes = "Too many monsters, increasing minimum stars to "
+    stats = {}
     def __init__(self, bot):
         self.bot = bot
+        # Open statistics csv.
+        if not bool(Cog_Summon.stats):
+            try:
+                with open('stats.json', 'r') as stats_file:
+                    Cog_Summon.stats = json.load(stats_file)
+            except FileNotFoundError:
+                print("No stats file found.")
 
+    def save():
+        with open('stats.json', 'w') as stats_file:
+            json.dump(Cog_Summon.stats, stats_file)
+    
     def name_element(self, monsters, min_star):
         m = []
         for monster in monsters:
             if monster["natural_stars"] < min_star:
                 continue
-            if monster["natural_stars"] == 4:
+            if monster["natural_stars"] <= 3:
+                if monster["is_awakened"] == True:
+                    m.append(monster["name"])
+                else:
+                    m.append(monster["element"].capitalize() + " " + monster["name"])
+            elif monster["natural_stars"] == 4:
                 if monster["is_awakened"] == True \
                 and (monster["name"] != "CHUN-LI" or monster["name"] != "DHALSIM") \
                 and monster["archetype"] != "UNKNOWN":
@@ -29,9 +51,8 @@ class Cog_Summon(commands.Cog):
             count[monster["natural_stars"]-1] += 1
         return count
 
-
     @commands.command(name='sum', help='Summons a scroll of specified type and amount. [uk, ms, leg, ld, trans, sf, ss]')
-    async def summon_command(self, ctx, type: str, amt: int, min_star: int=1):
+    async def summon_command(self, ctx, type: str, amt: int=1, min_star: int=3):
         if type == "uk":
             s = summon.summon(0, amt)
         elif type == "ms":
@@ -46,13 +67,82 @@ class Cog_Summon(commands.Cog):
             s = summon.summon(5, amt)
         elif type == "ss":
             s = summon.summon(6, amt)
+        elif type == "pp":
+            s = summon.summon(1, amt*11)
+        elif type == "nat5":
+            s = summon.summon(7, amt)
+        elif type == "ld5":
+            s = summon.summon(8, amt)
         else:
             await ctx.send("Invalid summoning options")
             return
         counts = self.count_stars(s)
-        stats = "\n3\u2b50: {star_3}\n4\u2b50: {star_4}\n5\u2b50: {star_5}".format(star_3=counts[2], star_4=counts[3], star_5=counts[4])
-        mes = await ctx.send("<@" + str(ctx.author.id) + "> " + ', '.join(self.name_element(s, min_star)) + stats)
+        counts_str = "\n3\u2b50: {star_3}\n4\u2b50: {star_4}\n5\u2b50: {star_5}".format(star_3=counts[2], star_4=counts[3], star_5=counts[4])
+        user = str(ctx.author.id)
+        mes = "<@" + user + "> " + ', '.join(self.name_element(s, min_star)) + counts_str
+        while len(mes) > 2000:
+            min_star += 1
+            mes = "<@" + user + "> " + ', '.join(self.name_element(s, min_star)) + counts_str
+            await ctx.send(self.longmes + str(min_star) + ".")
+        await ctx.send(mes)
+        # Blessing
+        if counts[4] > 0 and (type == "ms" or type == "leg" or type == "trans" or type == "pp" or type == "nat5"):
+            s2 = summon.summon(4, counts[4])
+            while s2[0] == s[-1]:
+                s2 = summon.summon(4, counts[4])
+            mes = "<@" + user + "> You have been blessed **" + str(counts[4]) + "** time" + ("s" if counts[4] > 1 else "") + "!\n" + ', '.join(self.name_element(s2, min_star))
+            await ctx.send(mes)
 
-        
+        # Stats tracking.
+        try:
+            Cog_Summon.stats[user]
+        except KeyError:
+            Cog_Summon.stats[user] = {}
+        # Change type for nat5 and ld5.
+        if type == "nat5":
+            type = "ms"
+        if type == "ld5":
+            type = "ld"
+        try:
+            Cog_Summon.stats[user][type]
+        except KeyError:
+            Cog_Summon.stats[user][type] = {}
+            Cog_Summon.stats[user][type]["3_star"] = 0
+            Cog_Summon.stats[user][type]["4_star"] = 0
+            Cog_Summon.stats[user][type]["5_star"] = 0
+        Cog_Summon.stats[user][type]["3_star"] += counts[2]
+        Cog_Summon.stats[user][type]["4_star"] += counts[3]
+        Cog_Summon.stats[user][type]["5_star"] += counts[4]
+        Cog_Summon.stats[user][type]["5_star"] = counts[4]
+
+
+    @commands.command(name='stats', help='Prints stats on your summoning history')
+    async def stats_command(self, ctx):
+        user = str(ctx.author.id)
+        try:
+            user_stats = Cog_Summon.stats[user]
+        except KeyError:
+            await ctx.send("<@" + user + "> You haven't summoned anything")
+            return
+        mes = "<@" + user + "> You have summoned:\n"
+        table = PrettyTable(["Type", "3\u2b50", "4\u2b50", "5\u2b50", "Total"])
+        table.set_style(PLAIN_COLUMNS)
+        for type in summon.types:
+            try:
+                row = []
+                counts = Cog_Summon.stats[user][type]
+                row.append(type)
+                row.append(str(counts["3_star"]))
+                row.append(str(counts["4_star"]))
+                row.append(str(counts["5_star"]))
+                row.append(counts["3_star"] + counts["4_star"] + counts["5_star"])
+                table.add_row(row)
+            except KeyError:
+                continue
+        await ctx.send(mes + "```" + table.get_string() + "```")
+
 def setup(bot):
-    bot.add_cog(Cog_Summon(bot))        
+    bot.add_cog(Cog_Summon(bot))
+
+def teardown(bot):
+    Cog_Summon.save()

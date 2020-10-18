@@ -12,6 +12,7 @@ bot.load_extension("cog_summon")
 
 @bot.command(name='exit', help='Exit bot')
 async def exit_command(ctx):
+    bot.unload_extension("cog_summon")
     await bot.logout()
 
 @bot.command(name='reload', help='Reload bot')
