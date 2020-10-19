@@ -4,6 +4,7 @@ from prettytable import PLAIN_COLUMNS
 from discord import Embed
 import json
 import summon
+import asyncio
 
 class Cog_Summon(commands.Cog):
     longmes = "Too many monsters, increasing minimum stars to "
@@ -21,6 +22,12 @@ class Cog_Summon(commands.Cog):
     def save():
         with open('stats.json', 'w') as stats_file:
             json.dump(Cog_Summon.stats, stats_file)
+
+    async def autosave(self):
+        await self.bot.wait_until_ready()
+        Cog_Summon.save()
+        print("Autosaved")
+        await asyncio.sleep(3600) # Autosave every hour
     
     def name_element(self, monsters, min_star):
         m = []
@@ -73,11 +80,26 @@ class Cog_Summon(commands.Cog):
             s = summon.summon(7, amt)
         elif type == "ld5":
             s = summon.summon(8, amt)
+        elif type == "ss5":
+            s = summon.summon(9, amt)
         else:
             await ctx.send("Invalid summoning options")
             return
+
+        # Change type for nat5, pp and ld5.
+        if type == "nat5":
+            type = "ms"
+        elif type == "pp":
+            type = "ms"
+        elif type == "ld5":
+            type = "ld"
+        elif type == "ss5":
+            type = "ss"
+
         counts = self.count_stars(s)
-        counts_str = "\n3\u2b50: {star_3}\n4\u2b50: {star_4}\n5\u2b50: {star_5}".format(star_3=counts[2], star_4=counts[3], star_5=counts[4])
+        total = sum(counts)
+        cost = total*summon.costs[summon.types.index(type)]
+        counts_str = "\n3\u2b50: {star_3}\n4\u2b50: {star_4}\n5\u2b50: {star_5}\nCost: ${cost:,.2f}".format(star_3=counts[2], star_4=counts[3], star_5=counts[4], cost=cost)
         user = str(ctx.author.id)
         mes = "<@" + user + "> " + ', '.join(self.name_element(s, min_star)) + counts_str
         while len(mes) > 2000:
@@ -86,7 +108,7 @@ class Cog_Summon(commands.Cog):
             await ctx.send(self.longmes + str(min_star) + ".")
         await ctx.send(mes)
         # Blessing
-        if counts[4] > 0 and (type == "ms" or type == "leg" or type == "trans" or type == "pp" or type == "nat5"):
+        if counts[4] > 0 and (type == "ms" or type == "leg" or type == "trans"):
             s2 = summon.summon(4, counts[4])
             while s2[0] == s[-1]:
                 s2 = summon.summon(4, counts[4])
@@ -98,11 +120,6 @@ class Cog_Summon(commands.Cog):
             Cog_Summon.stats[user]
         except KeyError:
             Cog_Summon.stats[user] = {}
-        # Change type for nat5 and ld5.
-        if type == "nat5":
-            type = "ms"
-        if type == "ld5":
-            type = "ld"
         try:
             Cog_Summon.stats[user][type]
         except KeyError:
@@ -125,21 +142,32 @@ class Cog_Summon(commands.Cog):
             await ctx.send("<@" + user + "> You haven't summoned anything")
             return
         mes = "<@" + user + "> You have summoned:\n"
-        table = PrettyTable(["Type", "3\u2b50", "4\u2b50", "5\u2b50", "Total"])
+        table = PrettyTable(["Type", "3\u2b50", "4\u2b50", "5\u2b50", "Total", "Cost"])
         table.set_style(PLAIN_COLUMNS)
         for type in summon.types:
             try:
                 row = []
                 counts = Cog_Summon.stats[user][type]
+                total = counts["3_star"] + counts["4_star"] + counts["5_star"]
                 row.append(type)
-                row.append(str(counts["3_star"]))
-                row.append(str(counts["4_star"]))
-                row.append(str(counts["5_star"]))
-                row.append(counts["3_star"] + counts["4_star"] + counts["5_star"])
+                row.append("{:,}".format(counts["3_star"]))
+                row.append("{:,}".format(counts["4_star"]))
+                row.append("{:,}".format(counts["5_star"]))
+                row.append("{:,}".format(total))
+                row.append("${:,.2f}".format(total*summon.costs[summon.types.index(type)]))
                 table.add_row(row)
             except KeyError:
                 continue
         await ctx.send(mes + "```" + table.get_string() + "```")
+    
+    @commands.command(name='save', help='Saves summoning stats data.')
+    async def save_command(self, ctx):
+        Cog_Summon.save()
+        await ctx.send("Saved statistics.")
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.bot.loop.create_task(self.autosave())
 
 def setup(bot):
     bot.add_cog(Cog_Summon(bot))

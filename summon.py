@@ -2,6 +2,7 @@ import json
 import random
 
 types = ["uk", "ms", "leg", "ld", "trans", "sf", "ss"]
+costs = [0, 3, 24.68, 12.34, 100, 35, 8.5]
 
 with open("elem1.json") as f:
     elem1 = json.load(f)
@@ -191,10 +192,19 @@ def ld_5():
     monsters.append(monster)
     return monsters
 
+def ss_5():
+    monsters = []
+    monster = ss()
+    while(monster["natural_stars"] != 5):
+        monsters.append(monster)
+        monster = ss()
+    monsters.append(monster)
+    return monsters
+
 def summon(type, amt):
-    methods = [unknown, mystical, legendary, ld, trans, sf, ss, nat_5, ld_5]
+    methods = [unknown, mystical, legendary, ld, trans, sf, ss, nat_5, ld_5, ss_5]
     summoned = []
-    if methods[type] == nat_5 or methods[type] == ld_5:
+    if methods[type] == nat_5 or methods[type] == ld_5 or methods[type] == ss_5:
         for i in range(amt):
             summoned.extend(methods[type]())
     else:
