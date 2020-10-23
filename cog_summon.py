@@ -6,9 +6,11 @@ import json
 import summon
 import asyncio
 
+
 class Cog_Summon(commands.Cog):
     longmes = "Too many monsters, increasing minimum stars to "
     stats = {}
+
     def __init__(self, bot):
         self.bot = bot
         # Open statistics csv.
@@ -28,7 +30,7 @@ class Cog_Summon(commands.Cog):
     async def autosave(self):
         Cog_Summon.save()
         print("Autosaved")
-    
+
     def name_element(self, monsters, min_star):
         m = []
         for monster in monsters:
@@ -38,28 +40,34 @@ class Cog_Summon(commands.Cog):
                 if monster["is_awakened"] == True:
                     m.append(monster["name"])
                 else:
-                    m.append(monster["element"].capitalize() + " " + monster["name"])
+                    m.append(monster["element"].capitalize() +
+                             " " + monster["name"])
             elif monster["natural_stars"] == 4:
                 if monster["is_awakened"] == True \
-                and (monster["name"] != "CHUN-LI" and monster["name"] != "DHALSIM") \
-                and monster["archetype"] != "UNKNOWN":
+                        and (monster["name"] != "CHUN-LI" and monster["name"] != "DHALSIM") \
+                        and monster["archetype"] != "UNKNOWN":
                     m.append("__" + monster["name"] + "__")
                 else:
-                    m.append("__" + monster["element"].capitalize() + " " + monster["name"] + "__")
+                    m.append(
+                        "__" + monster["element"].capitalize() + " " + monster["name"] + "__")
             elif monster["natural_stars"] == 5:
-                m.append("**" + monster["element"].capitalize() + " " + monster["name"] + "**")
+                m.append(
+                    "**" + monster["element"].capitalize() + " " + monster["name"] + "**")
             else:
-                m.append(monster["element"].capitalize() + " " + monster["name"])
+                m.append(monster["element"].capitalize() +
+                         " " + monster["name"])
         return m
 
     def count_stars(self, monsters):
         count = [0, 0, 0, 0, 0]
+        mons = [[], [], [], [], []]
         for monster in monsters:
             count[monster["natural_stars"]-1] += 1
-        return count
+            mons[monster["natural_stars"]-1].append(monster)
+        return count, mons
 
     @commands.command(name='sum', help='Summons a scroll of specified type and amount. [uk, ms, leg, ld, trans, sf, ss]')
-    async def summon_command(self, ctx, type: str, amt: int=1, min_star: int=3):
+    async def summon_command(self, ctx, type: str, amt: int = 1, min_star: int = 3):
         if type == "uk":
             s = summon.summon(0, amt)
         elif type == "ms":
@@ -96,23 +104,30 @@ class Cog_Summon(commands.Cog):
         elif type == "ss5":
             type = "ss"
 
-        counts = self.count_stars(s)
+        counts, split_mons = self.count_stars(s)
         total = sum(counts)
         cost = total*summon.costs[summon.types.index(type)]
-        counts_str = "\n3\u2b50: {star_3}\n4\u2b50: {star_4}\n5\u2b50: {star_5}\nCost: ${cost:,.2f}".format(star_3=counts[2], star_4=counts[3], star_5=counts[4], cost=cost)
+        counts_str = "\n3\u2b50: {star_3}\n4\u2b50: {star_4}\n5\u2b50: {star_5}\nCost: ${cost:,.2f}".format(
+            star_3=counts[2], star_4=counts[3], star_5=counts[4], cost=cost)
         user = str(ctx.author.id)
-        mes = "<@" + user + "> " + ', '.join(self.name_element(s, min_star)) + counts_str
+        mes = "<@" + user + "> " + \
+            ', '.join(self.name_element(s, min_star)) + counts_str
         while len(mes) > 2000:
             min_star += 1
-            mes = "<@" + user + "> " + ', '.join(self.name_element(s, min_star)) + counts_str
+            mes = "<@" + user + "> " + \
+                ', '.join(self.name_element(s, min_star)) + counts_str
             await ctx.send(self.longmes + str(min_star) + ".")
         await ctx.send(mes)
         # Blessing
+        blessing = []
         if counts[4] > 0 and (type == "ms" or type == "leg" or type == "trans"):
-            s2 = summon.summon(4, counts[4])
-            while s2[0] == s[-1]:
-                s2 = summon.summon(4, counts[4])
-            mes = "<@" + user + "> You have been blessed **" + str(counts[4]) + "** time" + ("s" if counts[4] > 1 else "") + "!\n" + ', '.join(self.name_element(s2, min_star))
+            for i in range(counts[4]):
+                bless = summon.summon(4, 1)
+                while bless[0] == split_mons[4][i]:
+                    bless = summon.summon(4, 1)
+                blessing.extend(bless)
+            mes = "<@" + user + "> You have been blessed **" + str(counts[4]) + "** time" + (
+                "s" if counts[4] > 1 else "") + "!\n" + ', '.join(self.name_element(blessing, min_star))
             await ctx.send(mes)
 
         # Stats tracking.
@@ -143,7 +158,8 @@ class Cog_Summon(commands.Cog):
             await ctx.send("<@" + user + "> You haven't summoned anything")
             return
         mes = "<@" + user + "> You have summoned:\n"
-        table = PrettyTable(["Type", "3\u2b50", "4\u2b50", "5\u2b50", "Total", "5\u2b50Rate", "Cost"])
+        table = PrettyTable(["Type", "3\u2b50", "4\u2b50",
+                             "5\u2b50", "Total", "5\u2b50Rate", "Cost"])
         table.set_style(PLAIN_COLUMNS)
         totals = [0, 0, 0, 0, 0]
         rows = 0
@@ -151,7 +167,8 @@ class Cog_Summon(commands.Cog):
             try:
                 row = []
                 counts = Cog_Summon.stats[user][type]
-                type_total = counts["3_star"] + counts["4_star"] + counts["5_star"]
+                type_total = counts["3_star"] + \
+                    counts["4_star"] + counts["5_star"]
                 row.append(type)
                 row.append("{:,}".format(counts["3_star"]))
                 totals[0] += counts["3_star"]
@@ -186,14 +203,16 @@ class Cog_Summon(commands.Cog):
         user = str(ctx.author.id)
         Cog_Summon.stats[user] = {}
         await ctx.send("<@" + user + "> Your stats have been reset.")
-    
+
     @commands.command(name='save', help='Saves summoning stats data.')
     async def save_command(self, ctx):
         Cog_Summon.save()
         await ctx.send("Saved statistics.")
 
+
 def setup(bot):
     bot.add_cog(Cog_Summon(bot))
+
 
 def teardown(bot):
     Cog_Summon.save()
