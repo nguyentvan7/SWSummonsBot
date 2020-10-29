@@ -1,4 +1,5 @@
-*.json
+#*.json
 .env
 __pycache__/
 monsters/
+.git*
