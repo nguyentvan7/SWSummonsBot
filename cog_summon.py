@@ -92,7 +92,7 @@ class Cog_Summon(commands.Cog):
             s = summon.summon(9, amt)
         elif type == "swc":
             s = summon.summon(10, amt)
-        elif type == "swc_5":
+        elif type == "swc5":
             s = summon.summon(11, amt)
         else:
             await ctx.send("Invalid summoning options")
