@@ -92,6 +92,8 @@ class Cog_Summon(commands.Cog):
             s = summon.summon(9, amt)
         elif type == "swc":
             s = summon.summon(10, amt)
+        elif type == "swc_5":
+            s = summon.summon(11, amt)
         else:
             await ctx.send("Invalid summoning options")
             return
@@ -105,6 +107,8 @@ class Cog_Summon(commands.Cog):
             type = "ld"
         elif type == "ss5":
             type = "ss"
+        elif type == "swc5":
+            type = "swc"
 
         counts, split_mons = self.count_stars(s)
         total = sum(counts)
