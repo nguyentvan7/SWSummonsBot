@@ -58,7 +58,6 @@ def gen_swc_mon(num, stars, isAwakened):
     m["name"] = str(stars) + "-star"
     m["image_filename"] = "swc.png"
     m["element"] = "#" + str(num%2+1) + " " + elem[num//2]
-    m["element"] = elem[num-1] if stars == 5 else "#" + str(num)
     m["archetype"] = "UNKNOWN"
     m["natural_stars"] = stars
     m["can_awaken"] = True
