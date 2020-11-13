@@ -249,7 +249,7 @@ def summon(type, amt):
     methods = [unknown, mystical, legendary, ld, trans, sf, ss, nat_5, ld_5, ss_5, swc, swc_5]
     summoned = []
     if methods[type] == nat_5 or methods[type] == ld_5 \
-    or methods[type] == ss_5 or methods[ty]e == swc_5:
+    or methods[type] == ss_5 or methods[type] == swc_5:
         for i in range(amt):
             summoned.extend(methods[type]())
     else:
