@@ -1,8 +1,8 @@
 import json
 import random
 
-types = ["uk", "ms", "leg", "ld", "trans", "sf", "ss"]
-costs = [0, 3, 24.68, 12.34, 100, 35, 8.5]
+types = ["uk", "ms", "leg", "ld", "trans", "sf", "ss", "swc"]
+costs = [0, 2, 15, 12, 70, 20, 4, 25]
 
 with open("elem1.json") as f:
     elem1 = json.load(f)
@@ -42,10 +42,22 @@ with open("sf_ld5.json") as f:
     sf_ld5 = json.load(f)
 
 elem = ["water", "fire", "wind"]
-def gen_mon(num, stars, isAwakened):
+def gen_ss_mon(num, stars, isAwakened):
     m = {}
     m["name"] = str(stars) + "-star"
     m["image_filename"] = "ss.png"
+    m["element"] = elem[num-1] if stars == 5 else "#" + str(num)
+    m["archetype"] = "UNKNOWN"
+    m["natural_stars"] = stars
+    m["can_awaken"] = True
+    m["is_awakened"] = isAwakened
+    return m
+
+def gen_swc_mon(num, stars, isAwakened):
+    m = {}
+    m["name"] = str(stars) + "-star"
+    m["image_filename"] = "swc.png"
+    m["element"] = "#" + str(num%2+1) + " " + elem[num//2]
     m["element"] = elem[num-1] if stars == 5 else "#" + str(num)
     m["archetype"] = "UNKNOWN"
     m["natural_stars"] = stars
@@ -160,20 +172,26 @@ def sf():
 
 def ss():
     r = random.random()
-    a = random.choice([True, False])
+    a = random.random()
+    if a < .98:
+        # Not awakened.
+        a = False
+    else:
+        # Awakened.
+        a = True
     if r < .915:
         # 3 star.
         m = random.randrange(1, 9)
-        return gen_mon(m, 3, a)
+        return gen_ss_mon(m, 3, a)
     elif r < .995:
         # 4 star.
         m = random.randrange(1, 6)
-        return gen_mon(m, 4, a)
+        return gen_ss_mon(m, 4, a)
     else:
         # 5 star.
         m = random.randrange(1, 4)
-        return gen_mon(m, 5, False)
-        
+        return gen_ss_mon(m, 5, False)
+
 def nat_5():
     monsters = []
     monster = mystical()
@@ -201,8 +219,27 @@ def ss_5():
     monsters.append(monster)
     return monsters
 
+def swc():
+    r = random.random()
+    a = random.random()
+    if a < .98:
+        # Not awakened.
+        a = False
+    else:
+        # Awakened.
+        a = True
+    if r < .92:
+        # 4 star.
+        m = random.randrange(1, 6)
+        return gen_swc_mon(m, 4, a)
+    else:
+        # 5 star.
+        m = random.randrange(1, 6)
+        return gen_swc_mon(m, 5, False)
+
+
 def summon(type, amt):
-    methods = [unknown, mystical, legendary, ld, trans, sf, ss, nat_5, ld_5, ss_5]
+    methods = [unknown, mystical, legendary, ld, trans, sf, ss, nat_5, ld_5, ss_5, swc]
     summoned = []
     if methods[type] == nat_5 or methods[type] == ld_5 or methods[type] == ss_5:
         for i in range(amt):
